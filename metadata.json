@@ -1,0 +1,6 @@
+{
+  "name": "الأستاذ - Al-Ostadh",
+  "description": "AI Virtual Math Tutor for Algerian Baccalaureate Students",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

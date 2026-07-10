@@ -1,0 +1,17 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+
+# Temporary scripts and tests
+fix_*.js
+fix_*.cjs
+patch_*.cjs
+patch_*.js
+test*.js
+restore_*.cjs
+debug_*.cjs
+tsc_output.txt
