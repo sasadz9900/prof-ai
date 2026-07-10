@@ -1,14 +1,13 @@
 import 'dotenv/config'; // تحميل متغيرات البيئة من ملف .env
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
+
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { WebSocketServer } from 'ws';
 import { createClient } from '@supabase/supabase-js';
 import { exec } from 'child_process';
 import { promises as fs } from 'fs';
-async function startServer() {
-  const app = express();
+const app = express();
   const PORT = 3000;
 
   app.use(express.json({ limit: '10mb' }));
@@ -343,6 +342,29 @@ systemInstruction: "أنت مجرد محول نص إلى صوت. الأسلوب 
       return res.status(400).json({ error: 'Missing code or id' });
     }
 
+    if (process.env.VERCEL === '1') {
+      if (process.env.MANIM_SERVICE_URL) {
+        try {
+          const response = await fetch(process.env.MANIM_SERVICE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, id })
+          });
+          if (!response.ok) throw new Error(`External service failed: ${response.status}`);
+          const data = await response.json();
+          return res.json(data);
+        } catch (e) {
+          console.error('External Manim service error:', e);
+          return res.status(502).json({ error: 'Failed to contact external Manim service', details: e.message });
+        }
+      } else {
+        return res.status(501).json({ 
+          error: 'Not Implemented on Vercel',
+          message: 'Manim local rendering is not supported in Vercel Serverless Functions. Please configure MANIM_SERVICE_URL.' 
+        });
+      }
+    }
+
     const manimDir = path.join(process.cwd(), 'manimations');
     const pyFileName = `temp_${id}.py`;
     const pyFilePath = path.join(manimDir, pyFileName);
@@ -384,23 +406,26 @@ systemInstruction: "أنت مجرد محول نص إلى صوت. الأسلوب 
   });
 
   // Vite middleware
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+  if (process.env.NODE_ENV !== 'production' && process.env.VERCEL !== '1') {
+    import('vite').then(async ({ createServer: createViteServer }) => {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
     });
-    app.use(vite.middlewares);
-  } else {
+  } else if (process.env.VERCEL !== '1') {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Production server running on http://localhost:${PORT}`);
+    });
   }
 
-  const httpServer = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-startServer();
+export default app;
