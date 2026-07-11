@@ -28,7 +28,8 @@ export default function HomePage({ session }: { session: any }) {
         .single();
       
       if (profile) {
-        setUserName(profile.full_name || session.user.email?.split('@')[0] || 'طالب');
+        const name = profile.full_name?.trim();
+        setUserName(name ? name : (session.user.email?.split('@')[0] || 'طالب'));
         if (profile.track_id) {
           const { data: track } = await supabase
             .from('tracks')
@@ -50,10 +51,10 @@ export default function HomePage({ session }: { session: any }) {
           .select(`
             lesson_id,
             status,
+            last_accessed,
             lessons ( id, title, subject_id, subjects ( name ) )
           `)
           .eq('user_id', session.user.id)
-          .eq('status', 'in_progress')
           .order('last_accessed', { ascending: false })
           .limit(1)
           .single();

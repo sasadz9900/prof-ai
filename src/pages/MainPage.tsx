@@ -235,6 +235,26 @@ export default function MainPage({ session }: { session: any }) {
     initSession();
   }, [session, subjectId, lessonId, startLive]);
 
+  // ── Track student progress ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!supabase || !session?.user?.id || !lessonId) return;
+
+    const trackProgress = async () => {
+      try {
+        await supabase.from('student_progress').upsert({
+          user_id: session.user.id,
+          lesson_id: lessonId,
+          status: 'in_progress',
+          last_accessed: new Date().toISOString()
+        }, { onConflict: 'user_id,lesson_id' });
+      } catch (err) {
+        console.error('Failed to track progress:', err);
+      }
+    };
+
+    trackProgress();
+  }, [lessonId, session?.user?.id]);
+
   // If mic denied, open chat panel as fallback
   useEffect(() => {
     if (liveError === 'mic_denied') {
