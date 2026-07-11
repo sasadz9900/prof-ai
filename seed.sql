@@ -60,6 +60,10 @@ BEGIN
   END IF;
 END $$;
 
+-- Add UNIQUE constraint to user_id to allow upsert
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_user_id_key;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_user_id_key UNIQUE (user_id);
+
 -- ===== 3. ROW LEVEL SECURITY (RLS) =====
 
 -- Enable RLS on all new tables

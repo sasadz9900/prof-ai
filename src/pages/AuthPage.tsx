@@ -58,13 +58,13 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
 
         if (data.user) {
-          const { error: profileError } = await supabase.from('profiles').insert([{
+          const { error: profileError } = await supabase.from('profiles').upsert([{
             user_id: data.user.id,
             full_name: fullName,
             grade_level: '3 ثانوي',
             math_average: parseFloat(mathAverage) || 10,
             track_id: trackId,
-          }]);
+          }], { onConflict: 'user_id' });
           if (profileError) console.error('Error creating profile:', profileError);
         }
       }
