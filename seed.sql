@@ -235,5 +235,22 @@ INSERT INTO lessons (subject_id, title, description, order_index) VALUES
   )
 ON CONFLICT (subject_id, title) DO NOTHING;
 
+-- ===== 5. AUTH TRIGGER (Auto-create profile) =====
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (user_id, full_name)
+  values (new.id, new.raw_user_meta_data->>'full_name')
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
 -- ===== DONE =====
 -- Tables created, RLS policies set, seed data inserted.

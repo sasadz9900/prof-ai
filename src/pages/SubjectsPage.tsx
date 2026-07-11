@@ -112,12 +112,16 @@ export default function SubjectsPage({ session }: { session: any }) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ track_id: selectedTrackId })
-        .eq('user_id', session.user.id);
+        .upsert(
+          { user_id: session.user.id, track_id: selectedTrackId },
+          { onConflict: 'user_id' }
+        );
       
       if (!error) {
         // Successfully saved, now refresh the subjects
         setRefreshKey(prev => prev + 1);
+      } else {
+        console.error('Supabase error:', error);
       }
     } catch (e) {
       console.error('Error saving track:', e);
