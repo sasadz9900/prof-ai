@@ -673,10 +673,10 @@ export default function MainPage({ session }: { session: any }) {
       </header>
 
       {/* ══ MAIN AREA ══ */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative flex w-full h-full overflow-hidden">
 
         {/* ── WHITEBOARD (100%) ── */}
-        <div className="absolute inset-0" dir="ltr">
+        <div className="flex-1 relative w-full h-full z-10 touch-none" dir="ltr">
           <Tldraw persistenceKey="al-ostadh-board" shapeUtils={customShapeUtils}>
             <TldrawInside editorRef={editorRef} onEditorReady={handleEditorReady} />
           </Tldraw>
@@ -685,7 +685,7 @@ export default function MainPage({ session }: { session: any }) {
         {/* ── CHAT PANEL (slide-in overlay) ── */}
         {chatOpen && (
           <div
-            className="absolute top-0 left-0 bottom-0 w-80 z-20 flex flex-col chat-panel-enter"
+            className="absolute top-0 left-0 bottom-0 w-80 z-50 flex flex-col chat-panel-enter"
             style={{
               background: 'rgba(15,23,42,0.92)',
               backdropFilter: 'blur(20px)',
