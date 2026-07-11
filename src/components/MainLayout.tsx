@@ -12,7 +12,7 @@ export default function MainLayout({ session }: { session: any }) {
     { name: 'الرئيسية', path: '/home', icon: Home },
     { name: 'الدروس', path: '/lessons', icon: BookOpen },
     { name: 'المكتبة', path: '#', icon: Library, disabled: true },
-    { name: 'القسم الروحي', path: '#', icon: Moon, disabled: true },
+    { name: 'الروحي', path: '#', icon: Moon, disabled: true },
     { name: 'متابعتي', path: '#', icon: LineChart, disabled: true },
   ];
 
@@ -30,16 +30,16 @@ export default function MainLayout({ session }: { session: any }) {
 
       {/* Mobile Bottom Navigation */}
       {!isBoardPage && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/70 z-50 safe-area-bottom">
-          <nav className="flex items-center justify-around px-2 py-2">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-slate-200/50 z-50 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+          <nav className="flex items-center justify-around px-1 py-1.5">
             {mobileNavItems.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.disabled ? '#' : item.path}
                 className={({ isActive }) =>
-                  `flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all min-w-0 ${
+                  `flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all min-w-0 relative ${
                     item.disabled
-                      ? 'opacity-30 cursor-not-allowed'
+                      ? 'opacity-25 cursor-not-allowed'
                       : isActive
                         ? 'text-indigo-600'
                         : 'text-slate-400'
@@ -47,8 +47,16 @@ export default function MainLayout({ session }: { session: any }) {
                 }
                 onClick={(e) => item.disabled && e.preventDefault()}
               >
-                <item.icon size={22} />
-                <span className="text-[10px] font-semibold truncate">{item.name}</span>
+                {({ isActive }) => (
+                  <>
+                    {/* Active indicator dot */}
+                    {isActive && !item.disabled && (
+                      <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+                    )}
+                    <item.icon size={22} strokeWidth={isActive && !item.disabled ? 2.5 : 1.8} />
+                    <span className={`text-[10px] truncate ${isActive && !item.disabled ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>

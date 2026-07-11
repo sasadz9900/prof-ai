@@ -15,3 +15,6 @@ test*.js
 restore_*.cjs
 debug_*.cjs
 tsc_output.txt
+
+.vercel
+.env*
