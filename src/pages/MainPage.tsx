@@ -673,10 +673,10 @@ export default function MainPage({ session }: { session: any }) {
       </header>
 
       {/* ══ MAIN AREA ══ */}
-      <div className="flex-1 relative flex w-full h-full overflow-hidden">
+      <div className="flex-1 relative overflow-hidden">
 
         {/* ── WHITEBOARD (100%) ── */}
-        <div className="flex-1 relative w-full h-full z-10 touch-none" dir="ltr">
+        <div className="absolute inset-0 z-10 touch-none" dir="ltr">
           <Tldraw persistenceKey="al-ostadh-board" shapeUtils={customShapeUtils}>
             <TldrawInside editorRef={editorRef} onEditorReady={handleEditorReady} />
           </Tldraw>
