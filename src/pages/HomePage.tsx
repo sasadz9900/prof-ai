@@ -1,15 +1,46 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { BookOpen, Library, Moon, LineChart, PlayCircle } from 'lucide-react';
+import { BookOpen, Library, Moon, LineChart, PlayCircle, Sparkles } from 'lucide-react';
 
 export default function HomePage({ session }: { session: any }) {
   const navigate = useNavigate();
   const [inProgressLesson, setInProgressLesson] = useState<any>(null);
   const [userName, setUserName] = useState<string>('');
+  const [trackName, setTrackName] = useState<string>('');
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'صباح الخير';
+    if (hour < 17) return 'مساء الخير';
+    return 'مساء النور';
+  };
 
   useEffect(() => {
-    setUserName(session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'طالب');
+    const fetchUserData = async () => {
+      if (!supabase) return;
+      
+      // Fetch profile with track name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, track_id')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (profile) {
+        setUserName(profile.full_name || session.user.email?.split('@')[0] || 'طالب');
+        if (profile.track_id) {
+          const { data: track } = await supabase
+            .from('tracks')
+            .select('name')
+            .eq('id', profile.track_id)
+            .single();
+          if (track) setTrackName(track.name);
+        }
+      } else {
+        setUserName(session.user.email?.split('@')[0] || 'طالب');
+      }
+    };
 
     const fetchProgress = async () => {
       if (!supabase) return;
@@ -27,70 +58,90 @@ export default function HomePage({ session }: { session: any }) {
           .limit(1)
           .single();
         
-        if (data) {
-          setInProgressLesson(data);
-        }
-      } catch (e) {
-        console.error('Failed to fetch progress', e);
-      }
+        if (data) setInProgressLesson(data);
+      } catch (_e) { /* No progress yet */ }
     };
+
+    fetchUserData();
     fetchProgress();
   }, [session]);
 
   const cards = [
-    { title: 'الدروس', icon: BookOpen, path: '/lessons', color: 'bg-indigo-500', disabled: false },
-    { title: 'المكتبة', icon: Library, path: '#', color: 'bg-teal-500', disabled: true },
-    { title: 'القسم الروحي', icon: Moon, path: '#', color: 'bg-amber-500', disabled: true },
-    { title: 'متابعتي', icon: LineChart, path: '#', color: 'bg-rose-500', disabled: true },
+    { title: 'الدروس', subtitle: 'ابدأ التعلم الآن', icon: BookOpen, path: '/lessons', gradient: 'from-indigo-500 to-purple-600', disabled: false },
+    { title: 'المكتبة', subtitle: 'ملخصات وتمارين', icon: Library, path: '#', gradient: 'from-teal-500 to-emerald-600', disabled: true },
+    { title: 'القسم الروحي', subtitle: 'أدعية وتحفيز', icon: Moon, path: '#', gradient: 'from-amber-500 to-orange-600', disabled: true },
+    { title: 'متابعتي', subtitle: 'تقدمك ونتائجك', icon: LineChart, path: '#', gradient: 'from-rose-500 to-pink-600', disabled: true },
   ];
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full">
-      <header className="mb-10 mt-4">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">مرحباً بك، {userName} 👋</h1>
-        <p className="text-slate-500">ماذا تريد أن تتعلم اليوم؟</p>
+    <div className="p-6 md:p-8 max-w-5xl mx-auto w-full">
+      {/* Welcome Banner */}
+      <header className="mb-10 mt-2">
+        <div className="bg-gradient-to-l from-indigo-600 via-indigo-700 to-purple-700 rounded-3xl p-8 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvc3ZnPg==')] opacity-50"></div>
+          <div className="relative">
+            <div className="flex items-center gap-2 text-indigo-200 text-sm mb-2">
+              <Sparkles size={16} />
+              {getGreeting()}
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">{userName} 👋</h1>
+            {trackName && (
+              <p className="text-indigo-200 flex items-center gap-2">
+                <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm">{trackName}</span>
+                ماذا تريد أن تتعلم اليوم؟
+              </p>
+            )}
+            {!trackName && <p className="text-indigo-200">ماذا تريد أن تتعلم اليوم؟</p>}
+          </div>
+        </div>
       </header>
 
+      {/* Continue Learning */}
       {inProgressLesson && inProgressLesson.lessons && (
-        <section className="mb-12">
-          <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <PlayCircle className="text-indigo-600" size={24} />
+        <section className="mb-10">
+          <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <PlayCircle className="text-indigo-600" size={22} />
             أكمل من حيث توقفت
           </h2>
           <div 
             onClick={() => navigate(`/board/${inProgressLesson.lessons.subject_id}/${inProgressLesson.lesson_id}`)}
-            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all flex items-center justify-between group"
+            className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-lg hover:border-indigo-300 transition-all flex items-center justify-between group"
           >
             <div>
               <div className="text-sm font-semibold text-indigo-600 mb-1">{inProgressLesson.lessons.subjects?.name}</div>
               <h3 className="text-xl font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">{inProgressLesson.lessons.title}</h3>
             </div>
-            <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-              <PlayCircle size={32} />
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
+              <PlayCircle size={28} />
             </div>
           </div>
         </section>
       )}
 
+      {/* Main Sections */}
       <section>
-        <h2 className="text-xl font-bold text-slate-800 mb-4">الأقسام الرئيسية</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {cards.map((card) => (
+        <h2 className="text-lg font-bold text-slate-800 mb-4">الأقسام الرئيسية</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {cards.map((card, i) => (
             <div 
               key={card.title}
               onClick={() => !card.disabled && navigate(card.path)}
-              className={`p-6 rounded-2xl border flex items-center gap-6 transition-all ${
+              className={`p-6 rounded-2xl border flex items-center gap-5 transition-all ${
                 card.disabled 
-                  ? 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed' 
-                  : 'bg-white border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-1 hover:border-indigo-200'
+                  ? 'bg-slate-50/80 border-slate-100 opacity-70 cursor-not-allowed' 
+                  : 'bg-white border-slate-200 shadow-sm cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-indigo-200 active:scale-[0.98]'
               }`}
+              style={{ animationDelay: `${i * 80}ms` }}
             >
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-inner ${card.color}`}>
-                <card.icon size={32} />
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg bg-gradient-to-br ${card.gradient} shrink-0`}>
+                <card.icon size={26} />
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-800">{card.title}</h3>
-                {card.disabled && <span className="inline-block mt-2 text-xs font-semibold bg-slate-200 text-slate-600 px-2 py-1 rounded">قريباً</span>}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-slate-800">{card.title}</h3>
+                <p className="text-sm text-slate-500 mt-0.5">{card.subtitle}</p>
+                {card.disabled && (
+                  <span className="inline-block mt-2 text-[10px] font-bold bg-slate-200/80 text-slate-500 px-2.5 py-0.5 rounded-full">قريباً</span>
+                )}
               </div>
             </div>
           ))}
